@@ -1,7 +1,8 @@
 FROM nvidia/cuda:12.8.0-base-ubuntu22.04 AS builder
 
-ARG PYTHON_VERSION="3.12"
-ARG CONTAINER_TIMEZONE=UTC 
+ARG PYTHON_VERSION="3.11"
+ARG CONTAINER_TIMEZONE=UTC
+
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
@@ -9,12 +10,15 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PIP_NO_CACHE_DIR=1 \
     PATH="${PATH}:/root/.local/bin:/root/.cargo/bin"
 
-# Install system dependencies 
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common \
     git \
     build-essential \
     libgl1-mesa-dev \
+    mecab \
+    libmecab-dev \
+    mecab-ipadic-utf8 \
     libglib2.0-0 \
     wget \
     ffmpeg \
@@ -67,8 +71,8 @@ RUN jupyter notebook --generate-config && \
     echo "c.NotebookApp.allow_origin = '*'" >> /root/.jupyter/jupyter_notebook_config.py && \
     echo "c.NotebookApp.allow_remote_access = True" >> /root/.jupyter/jupyter_notebook_config.py
 
-# clear cache to free up space 
-RUN uv cache clean 
+# clear cache to free up space
+RUN uv cache clean
 RUN apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Create workspace directory
@@ -78,7 +82,7 @@ RUN mkdir -p /notebooks /notebooks/dto /notebooks/static /notebooks/utils /noteb
 # Copy scripts to root
 WORKDIR /notebooks
 COPY start.sh .
-COPY log_viewer.py . 
+COPY log_viewer.py .
 COPY download_models.py .
 COPY ./constants/ ./constants/
 COPY ./dto/ ./dto/
